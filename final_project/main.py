@@ -8,6 +8,7 @@ from langchain.text_splitter import CharacterTextSplitter
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.vectorstores import Pinecone
 import pinecone
+from langchain.chains import RetrievalQA
 
 # Define NLP class
 class GenAILearningPathIndex:
@@ -35,16 +36,31 @@ class GenAILearningPathIndex:
         print(result)
         
     def getembeddings(self):
-        self.embeddings = OpenAIEmbeddings(self.my_key)
+        self.embeddings = OpenAIEmbeddings(openai_api_key=self.my_key)
+    
+    def pinecone_init(self):
+        pinecone.init(api_key=os.getenv("PINECONE_API_KEY"), environment="asia-southeast1-gcp-free")
         
 
 if __name__=='__main__':
-    data_path="C:\\Users\\Manish_Bhoge\\OneDrive - EPAM\\Tut\\Kaggle-Mentership-Program\\Project - GenAI\\kagglex-final-project\\final_project\\Learning_Pathway_Index.csv"
+    data_path="C:\\Users\\Manish_Bhoge\\OneDrive - EPAM\\Tut\\Kaggle-Mentership-Program\\Project - GenAI\\kagglex-final-project\\final_project\\Learning_Pathway_Index_1.csv"
     GenAI_project = GenAILearningPathIndex(data_path)
     # print(f"Key is : {GenAI_project.my_key}")
     # GenAI_project.text = "what is AI?"
     GenAI_project.getllm()
     GenAI_project.load_data()
+    GenAI_project.getembeddings()
+    GenAI_project.pinecone_init()
+    
+    docsearch = Pinecone.from_documents(GenAI_project.text, GenAI_project.embeddings, index_name="genai-learning-path-index")
+    
+    qa = RetrievalQA.from_chain_type(
+        llm=OpenAI(), chain_type="stuff", retriever=docsearch.as_retriever()
+    )
+    
+    query = "Give me Machine Learning Course with 10 min duration"
+    result = qa({"query":query})
+    print(result)
     #print(len(text))
     
     
