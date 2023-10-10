@@ -10,11 +10,10 @@ from langchain.vectorstores import Pinecone
 import pinecone
 from langchain.chains import RetrievalQA
 
-# Define NLP class
+# Define GenAI class
 class GenAILearningPathIndex:
     def __init__(self, data_path):
         load_dotenv()  # Load .env file
-        # Rest of your code goes here
         self.openai_api_key = os.getenv("OPENAI_API_KEY")
         self.pinecone_api_key = os.getenv("PINECONE_API_KEY")
         self.data_path = data_path
@@ -40,22 +39,27 @@ class GenAILearningPathIndex:
     def pinecone_init(self):
         pinecone.init(api_key=self.pinecone_api_key, environment="asia-southeast1-gcp-free")
         
+# Class definition ends here
 
 if __name__=='__main__':
+    # Setting up the project
     current_directory = os.getcwd()
     data_path = current_directory + "\\final_project\\Learning_Pathway_Index_1.csv" 
+    # Initialize the Class
     GenAI_project = GenAILearningPathIndex(data_path)
-    GenAI_project.getllm()
+    # Load the data
     GenAI_project.load_data()
+    # Get the embeddings
     GenAI_project.getembeddings()
+    # Initialize pinecone
     GenAI_project.pinecone_init()
-    
+    # Create the index
     docsearch = Pinecone.from_documents(GenAI_project.text, GenAI_project.embeddings, index_name="genai-learning-path-index")
-    
+    # Create the QA model
     qa = RetrievalQA.from_chain_type(
         llm=OpenAI(), chain_type="stuff", retriever=docsearch.as_retriever()
     )
-    
+    # Test the model
     query = "Give me Machine Learning Course with 10 min duration. Can you suggest the similar courses on the coursera?"
     result = qa({"query":query})
     print(result)
