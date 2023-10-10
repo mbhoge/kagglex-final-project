@@ -60,7 +60,7 @@ if __name__=='__main__':
         llm=OpenAI(), chain_type="stuff", retriever=docsearch.as_retriever()
     )
     # Test the model
-    query = "Give me Machine Learning Course with 10 min duration. Can you suggest the similar courses on the coursera?"
+    query = "Give me Machine Learning Course with 10 min duration. Are there any similar courses on coursera?"
     result = qa({"query":query})
     print(result)
     
