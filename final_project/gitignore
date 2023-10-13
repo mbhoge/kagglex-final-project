@@ -1,3 +1,5 @@
-.ipynb_checkpoints
-.env
+# Ignore checkpoints and enviornment files
+
+*.ipynb_checkpoints
+*.env
 venv*/

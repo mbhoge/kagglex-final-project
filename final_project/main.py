@@ -39,6 +39,9 @@ class GenAILearningPathIndex:
     def pinecone_init(self):
         pinecone.init(api_key=self.pinecone_api_key, environment="asia-southeast1-gcp-free")
         
+    def create_index(self):
+        docsearch = Pinecone.from_documents(self.text, self.embeddings, index_name="genai-learning-path-index")
+        return docsearch        
 # Class definition ends here
 
 if __name__=='__main__':
@@ -55,6 +58,7 @@ if __name__=='__main__':
     GenAI_project.pinecone_init()
     # Create the index
     docsearch = Pinecone.from_documents(GenAI_project.text, GenAI_project.embeddings, index_name="genai-learning-path-index")
+    GenAI_project.create_index()
     # Create the QA model
     qa = RetrievalQA.from_chain_type(
         llm=OpenAI(), chain_type="stuff", retriever=docsearch.as_retriever()
@@ -62,6 +66,5 @@ if __name__=='__main__':
     # Test the model
     query = "Give me Machine Learning Course with 10 min duration. Are there any similar courses on coursera?"
     result = qa({"query":query})
-    print(result)
-    
+    print(result) 
     
