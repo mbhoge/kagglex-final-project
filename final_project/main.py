@@ -83,7 +83,7 @@ if __name__=='__main__':
     # Create the QA model for pinecone
     qa = RetrievalQA.from_chain_type(llm=OpenAI(), chain_type="stuff", retriever=GenAI_project.faiss_vectorstore.as_retriever())
     # Test the FAISS model
-    res = qa.run("Deep Learning Courses")
+    res = qa.run("{var}.")
     st.write(res)
     #print(res)
     # comment out the below code to run the streamlit app       
