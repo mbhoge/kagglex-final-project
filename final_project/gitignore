@@ -1,5 +1,7 @@
 # Ignore checkpoints and enviornment files
 
-*.ipynb_checkpoints
-*.env
-venv*/
+# Ignore all files with .env extension in any directory
+**/*.env
+
+# Ignore all .env files in the root directory and its subdirectories
+.env
