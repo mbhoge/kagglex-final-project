@@ -9,7 +9,7 @@ def app():
     st.write("Embark your Learning Path Journey with right search !!")
 
     # Add a text input to your app
-    user_input = st.text_input("Enter your query here")
+    user_input = st.text_input("Enter your course query here")
 
     # Store the input in a variable
     my_variable = user_input
