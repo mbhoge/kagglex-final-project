@@ -1,5 +1,3 @@
-# Ignore checkpoints and enviornment files
-
 # Ignore all files with .env extension in any directory
 **/*.env
 
