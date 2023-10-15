@@ -14,43 +14,47 @@ from interface import app
 from langchain.prompts import PromptTemplate
 import streamlit as st
 
-class LoadLearningPathIndexModel:
-    # Initialize the Class
-    def __init__(self):
+class GenerateLearningPathIndexEmbeddings:
+    def __init__(self, csv_filename):
         load_dotenv()  # Load .env file
         self.openai_api_key = os.getenv("OPENAI_API_KEY")
-        self.data_path = os.path.join(os.getcwd(), "Learning_Pathway_Index.csv")
+        self.data_path = os.path.join(os.getcwd(), csv_filename)
         self.text = None
         self.embeddings = None
         self.faiss_vectorstore = None
 
-        # Load the data
-        self.load_data()
-        # Get the embeddings
-        self.getembeddings()
-        self.create_faiss_vectorstore()
+        self.load_csv_data()
+        self.get_openai_embeddings()
+        self.create_faiss_vectorstore_with_csv_data_and_openai_embeddings()
            
-    def load_data(self):
+    def load_csv_data(self):
         # Load your dataset (e.g., CSV, JSON, etc.)
+        print(' -- Started loading .csv file for chunking purposes.')
         loader = TextLoader(self.data_path)
         document = loader.load()
         text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=30, separator="\n")
         self.text = text_splitter.split_documents(document)
+        print(' -- Finished spitting (chunking) text (documents) from the .csv file.')
         
-    def getembeddings(self):
+    def get_openai_embeddings(self):
         self.embeddings = OpenAIEmbeddings(openai_api_key=self.openai_api_key, request_timeout=60)
         
-    def create_faiss_vectorstore(self):
-        vectorstore = FAISS.from_documents(
-            self.text, self.embeddings
-        )
-        vectorstore.save_local("faiss_learning_path_index")
+    def create_faiss_vectorstore_with_csv_data_and_openai_embeddings(self):
+        faiss_vectorstore_foldername = "faiss_learning_path_index"
+        if not os.path.exists(faiss_vectorstore_foldername):
+            print(' -- Creating a new FAISS vector store from chunked text and OpenAI embeddings.')
+            vectorstore = FAISS.from_documents(self.text, self.embeddings)
+            vectorstore.save_local(faiss_vectorstore_foldername)
+            print(f' -- Saved the newly created FAISS vector store at "{faiss_vectorstore_foldername}".')
+        else:
+            print(f' -- WARNING: Found existing FAISS vector store at "{faiss_vectorstore_foldername}", loading it.')
         self.faiss_vectorstore = FAISS.load_local(
             "faiss_learning_path_index", self.embeddings
         )
 
     def get_faiss_vector_store(self):
         return self.faiss_vectorstore
+
 
 # https://discuss.streamlit.io/t/how-to-check-if-code-is-run-inside-streamlit-and-not-e-g-ipython/23439/7
 def running_inside_streamlit():
@@ -93,7 +97,7 @@ class GenAILearningPathIndex:
 
         self.llm = OpenAI(temperature=0.1, openai_api_key=self.openai_api_key)
        
-    def get_query(self, query: str):
+    def get_response_for(self, query: str):
         qa = RetrievalQA.from_chain_type(
             llm=self.llm, chain_type="stuff", 
             retriever=self.faiss_vectorstore.as_retriever(),
@@ -101,36 +105,40 @@ class GenAILearningPathIndex:
         )
         return qa.run(query)
 
-# Class definition ends here
-
 def get_formatted_time(current_time = time.time()):
     return datetime.utcfromtimestamp(current_time).strftime('%Y-%m-%d %H:%M:%S')
 
 @st.cache_data
 def load_model():
     start_time = time.time()
-    print(f"\nStarted loading model at {get_formatted_time(start_time)}")
-    learningPathIndexModel = LoadLearningPathIndexModel()
-    faiss_vectorstore = learningPathIndexModel.get_faiss_vector_store()
+    print(f"\nStarted loading custom embeddings (created from .csv file) at {get_formatted_time(start_time)}")
+    learningPathIndexEmbeddings = GenerateLearningPathIndexEmbeddings("Learning_Pathway_Index.csv")
+    faiss_vectorstore = learningPathIndexEmbeddings.get_faiss_vector_store()
     end_time = time.time()
-    print(f"Finished loading model at {get_formatted_time(end_time)}")
-    print(f"Model took about {end_time - start_time} seconds) to load.")
+    print(f"Finished loading custom embeddings (created from .csv file) at {get_formatted_time(end_time)}")
+    print(f"Custom embeddings (created from .csv file) took about {end_time - start_time} seconds to load.")
     return faiss_vectorstore
+
+
+def query_gpt_model(query: str):
+    start_time = time.time()
+    print(f"\nQuery processing start time: {get_formatted_time(start_time)}")
+    genAIproject = GenAILearningPathIndex(faiss_vectorstore)
+    answer = genAIproject.get_response_for(query)
+    end_time = time.time()
+    print(f"\nQuery processing finish time: {get_formatted_time(end_time)}")
+    print(f"\nAnswer (took about {end_time - start_time} seconds)")
+    return answer
+
 
 if __name__=='__main__':
     faiss_vectorstore = load_model()
-    genAIproject = GenAILearningPathIndex(faiss_vectorstore)
 
     if running_inside_streamlit():
-        print("\nStreamlit environment detected.\n")
+        print("\nStreamlit environment detected. \nTo run a CLI interactive version just run `python main.py` in the CLI.\n")
         query_from_stream_list = app()
         if query_from_stream_list:
-            start_time = time.time()
-            print(f"\nQuery processing start time: {get_formatted_time(start_time)}")
-            answer = genAIproject.get_query(query_from_stream_list)
-            end_time = time.time()
-            print(f"\nQuery processing finish time: {get_formatted_time(end_time)}")
-            print(f"\nAnswer (took about {end_time - start_time} seconds)")
+            answer = query_gpt_model(query_from_stream_list)
             st.write(answer)
     else:
         print("\nCommand-line interactive environment detected.\n")
@@ -141,15 +149,9 @@ if __name__=='__main__':
             if query.strip() == "":
                 continue
 
-            # Get the answer from the chain
-            start_time = time.time()
-            print(f"\nQuery processing start time: {get_formatted_time(start_time)}")
-            answer = genAIproject.get_query(query)
-            end_time = time.time()
+            if query:
+                answer = query_gpt_model(query)
 
-            # Print the result
-            print("\n\n> Question:")
-            print(query)
-            print(f"\nQuery processing finish time: {get_formatted_time(end_time)}")
-            print(f"\nAnswer (took about {end_time - start_time} seconds):")
-            print(answer)
+                print("\n\n> Question:")
+                print(query)
+                print(answer)
