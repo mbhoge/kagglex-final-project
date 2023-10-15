@@ -6,12 +6,13 @@ from langchain.llms import OpenAI
 from langchain.document_loaders import TextLoader
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.embeddings.openai import OpenAIEmbeddings
-from langchain.chains import RetrievalQA, LLMChain
+from langchain.chains import RetrievalQA
 from langchain.prompts import PromptTemplate
 from langchain.llms import OpenAI
 from langchain.vectorstores import FAISS
-from interface import app
 from langchain.prompts import PromptTemplate
+
+from interface import app
 import streamlit as st
 
 class GenerateLearningPathIndexEmbeddings:
@@ -19,8 +20,8 @@ class GenerateLearningPathIndexEmbeddings:
         load_dotenv()  # Load .env file
         self.openai_api_key = os.getenv("OPENAI_API_KEY")
         self.data_path = os.path.join(os.getcwd(), csv_filename)
-        self.text = None
-        self.embeddings = None
+        self.our_custom_data = None
+        self.openai_embeddings = None
         self.faiss_vectorstore = None
 
         self.load_csv_data()
@@ -33,23 +34,24 @@ class GenerateLearningPathIndexEmbeddings:
         loader = TextLoader(self.data_path)
         document = loader.load()
         text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=30, separator="\n")
-        self.text = text_splitter.split_documents(document)
-        print(' -- Finished spitting (chunking) text (documents) from the .csv file.')
+        self.our_custom_data = text_splitter.split_documents(document)
+        print(f' -- Finished spitting (i.e. chunking) text (i.e. documents) from the .csv file (i.e. {self.data_path}).')
         
     def get_openai_embeddings(self):
-        self.embeddings = OpenAIEmbeddings(openai_api_key=self.openai_api_key, request_timeout=60)
+        self.openai_embeddings = OpenAIEmbeddings(openai_api_key=self.openai_api_key, request_timeout=60)
         
     def create_faiss_vectorstore_with_csv_data_and_openai_embeddings(self):
         faiss_vectorstore_foldername = "faiss_learning_path_index"
         if not os.path.exists(faiss_vectorstore_foldername):
             print(' -- Creating a new FAISS vector store from chunked text and OpenAI embeddings.')
-            vectorstore = FAISS.from_documents(self.text, self.embeddings)
+            vectorstore = FAISS.from_documents(self.our_custom_data, self.openai_embeddings)
             vectorstore.save_local(faiss_vectorstore_foldername)
             print(f' -- Saved the newly created FAISS vector store at "{faiss_vectorstore_foldername}".')
         else:
-            print(f' -- WARNING: Found existing FAISS vector store at "{faiss_vectorstore_foldername}", loading it.')
+            print(f' -- WARNING: Found existing FAISS vector store at "{faiss_vectorstore_foldername}", loading from cache.')
+            print(f' -- NOTE: Delete the FAISS vector store at "{faiss_vectorstore_foldername}", if you wish to regenerate it from scratch for the next run.')
         self.faiss_vectorstore = FAISS.load_local(
-            "faiss_learning_path_index", self.embeddings
+            "faiss_learning_path_index", self.openai_embeddings
         )
 
     def get_faiss_vector_store(self):
