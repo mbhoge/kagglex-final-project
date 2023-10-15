@@ -5,3 +5,4 @@
 .env
 
 __*/**
+faiss_learning_path_index/

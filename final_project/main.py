@@ -13,7 +13,6 @@ from langchain.vectorstores import FAISS
 from interface import app
 from langchain.prompts import PromptTemplate
 import streamlit as st
-from tqdm import tqdm
 
 class LoadLearningPathIndexModel:
     # Initialize the Class
@@ -53,6 +52,26 @@ class LoadLearningPathIndexModel:
     def get_faiss_vector_store(self):
         return self.faiss_vectorstore
 
+# https://discuss.streamlit.io/t/how-to-check-if-code-is-run-inside-streamlit-and-not-e-g-ipython/23439/7
+def running_inside_streamlit():
+    """
+    Function to check whether python code is run within streamlit
+
+    Returns
+    -------
+    use_streamlit : boolean
+        True if code is run within streamlit, else False
+    """
+    try:
+        from streamlit.runtime.scriptrunner import get_script_run_ctx
+        if not get_script_run_ctx():
+            use_streamlit = False
+        else:
+            use_streamlit = True
+    except ModuleNotFoundError:
+        use_streamlit = False
+    return use_streamlit
+
 
 # Define GenAI class
 class GenAILearningPathIndex:
@@ -63,16 +82,16 @@ class GenAILearningPathIndex:
 
         prompt_template = \
             """
-                Use the following template to answer the question at the end.
+                Use the following template to answer the question at the end, from the Learning Path Index csv file.
                 If you don't know the answer, just say that you don't know, don't try to make up an answer.
-                Display the results in a tabular form, results must contain a link for each line of the result.
+                Display the results in a table, results must contain a link for each line of the result.
                 {context}
                 Question: {question}
             """
         PROMPT = PromptTemplate(template=prompt_template, input_variables=["context","question"])
         self.chain_type_kwargs = {"prompt": PROMPT}
 
-        self.llm = OpenAI(temperature=0.1, openai_api_key=GenAILearningPathIndex.openai_api_key)
+        self.llm = OpenAI(temperature=0.1, openai_api_key=self.openai_api_key)
        
     def get_query(self, query: str):
         qa = RetrievalQA.from_chain_type(
@@ -84,39 +103,53 @@ class GenAILearningPathIndex:
 
 # Class definition ends here
 
-faiss_vectorstore = None
+def get_formatted_time(current_time = time.time()):
+    return datetime.utcfromtimestamp(current_time).strftime('%Y-%m-%d %H:%M:%S')
+
+@st.cache_data
+def load_model():
+    start_time = time.time()
+    print(f"\nStarted loading model at {get_formatted_time(start_time)}")
+    learningPathIndexModel = LoadLearningPathIndexModel()
+    faiss_vectorstore = learningPathIndexModel.get_faiss_vector_store()
+    end_time = time.time()
+    print(f"Finished loading model at {get_formatted_time(end_time)}")
+    print(f"Model took about {end_time - start_time} seconds) to load.")
+    return faiss_vectorstore
+
 if __name__=='__main__':
-    # var = app()
-
-    # Initialize the Class
-
-    if not faiss_vectorstore:
-        learningPathIndexModel = LoadLearningPathIndexModel()
-        faiss_vectorstore = learningPathIndexModel.get_faiss_vector_store()
+    faiss_vectorstore = load_model()
     genAIproject = GenAILearningPathIndex(faiss_vectorstore)
 
-    # Interactive questions and answers
-    while True:
-        query = input("\nEnter a query: ")
-        if query == "exit":
-            break
-        if query.strip() == "":
-            continue
+    if running_inside_streamlit():
+        print("\nStreamlit environment detected.\n")
+        query_from_stream_list = app()
+        if query_from_stream_list:
+            start_time = time.time()
+            print(f"\nQuery processing start time: {get_formatted_time(start_time)}")
+            answer = genAIproject.get_query(query_from_stream_list)
+            end_time = time.time()
+            print(f"\nQuery processing finish time: {get_formatted_time(end_time)}")
+            print(f"\nAnswer (took about {end_time - start_time} seconds)")
+            st.write(answer)
+    else:
+        print("\nCommand-line interactive environment detected.\n")
+        while True:
+            query = input("\nEnter a query: ")
+            if query == "exit":
+                break
+            if query.strip() == "":
+                continue
 
-        # Get the answer from the chain
-        start = time.time()
-        print(f"\nStart time: {datetime.utcfromtimestamp(start).strftime('%Y-%m-%d %H:%M:%S')}")
-        response = genAIproject.get_query(query)
-        answer, docs = response['result'], []
-        end = time.time()
+            # Get the answer from the chain
+            start_time = time.time()
+            print(f"\nQuery processing start time: {get_formatted_time(start_time)}")
+            answer = genAIproject.get_query(query)
+            end_time = time.time()
 
-        # Print the result
-        print("\n\n> Question:")
-        print(query)
-        print(f"\nEnd time: {datetime.utcfromtimestamp(end).strftime('%Y-%m-%d %H:%M:%S')}")
-        print(f"\nAnswer (took about {end - start} seconds):")
-        print(answer)
-
-
-    # st.write(res)
-    # st.write(datetime.now())
+            # Print the result
+            print("\n\n> Question:")
+            print(query)
+            print(f"\nQuery processing finish time: {get_formatted_time(end_time)}")
+            print(f"\nAnswer (took about {end_time - start_time} seconds):")
+            print(answer)
