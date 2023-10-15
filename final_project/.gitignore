@@ -3,3 +3,5 @@
 
 # Ignore all .env files in the root directory and its subdirectories
 .env
+
+__*/**

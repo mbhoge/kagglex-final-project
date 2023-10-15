@@ -28,5 +28,4 @@ def faiss_index():
 
 
 if __name__ == "__main__":
-    os.environ['OPENAI_API_KEY'] = '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'
     faiss_index()
