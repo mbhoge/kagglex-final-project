@@ -7,8 +7,10 @@ The end-to-end process can be learnt by going through the code base as well as b
 ## Pre-requisites
 
 - Python 3.8.x or above
+- OpenAI API Key (see [How to get an OpenAI API Key](https://www.howtogeek.com/885918/how-to-get-an-openai-api-key/) -- note it's may not be FREE anymore)
 - Install dependencies from `requirements.txt`
 - Basic Command-line experience
+- Basic git and GitHub experience
 
 ## Install and run
 
