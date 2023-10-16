@@ -36,16 +36,6 @@ class GenAILearningPathIndex:
         self.load_data()
         # Get the embeddings
         self.getembeddings()
-        # Initialize pinecone
-        # self.pinecone_init()
-        # Create the pincone index
-        # self.create_index()
-        # Create the QA model for pinecone
-        # qa = RetrievalQA.from_chain_type(llm=OpenAI(), chain_type="stuff", retriever=docsearch.as_retriever())
-        # Test the pinecone model
-        # query = "Give me Machine Learning Course with 10 min duration. Are there any similar courses on coursera?"
-        # result = qa({"query": query})
-        # print(result)
         self.faiss_index()
 
     def load_data(self):
@@ -76,12 +66,6 @@ class GenAILearningPathIndex:
 
 if __name__=='__main__':
     var = app()
-    # st.write(f"The stored variable is: {var}")
-    
-    # # Setting up the project
-    # current_directory = os.getcwd()
-    # data_path = current_directory + "\\Learning_Pathway_Index.csv"
-    # Initialize the Class
     GenAI_project = GenAILearningPathIndex()
     
     prompt_template = """Use the following template to answer the question at the end. 
