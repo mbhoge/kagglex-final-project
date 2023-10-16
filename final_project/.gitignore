@@ -2,4 +2,7 @@
 **/*.env
 
 # Ignore all .env files in the root directory and its subdirectories
-.env 
+.env
+
+__*/**
+faiss_learning_path_index/
