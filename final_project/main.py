@@ -14,7 +14,14 @@ from langchain.prompts import PromptTemplate
 
 from interface import app
 import streamlit as st
-
+# Define GenerateLearningPathIndexEmbeddings class: 
+#  - Load .csv file
+#  - Chunk text
+#    - Chunk size = 1000 characters
+#    - Chunk overlap = 30 characters
+#  - Create FAISS vector store from chunked text and OpenAI embeddings
+#  - Get FAISS vector store
+# This class is used to generate the FAISS vector store from the .csv file.
 class GenerateLearningPathIndexEmbeddings:
     def __init__(self, csv_filename):
         load_dotenv()  # Load .env file
@@ -79,7 +86,12 @@ def running_inside_streamlit():
     return use_streamlit
 
 
-# Define GenAI class
+# Define GenAI class:
+#  - Create prompt template
+#  - Create GenAI project
+#  - Get response for query
+# This class is used to get the response for a query from the GenAI project.
+# The GenAI project is created from the FAISS vector store.
 class GenAILearningPathIndex:
     def __init__(self, faiss_vectorstore):
         load_dotenv()  # Load .env file
@@ -88,16 +100,22 @@ class GenAILearningPathIndex:
 
         prompt_template = \
             """
-                Use the following template to answer the question at the end, from the Learning Path Index csv file.
-                If you don't know the answer, just say that you don't know, don't try to make up an answer.
-                Display the results in a table, results must contain a link for each line of the result.
+                Use the following template to answer the question at the end, 
+                from the Learning Path Index csv file.
+                If you don't know the answer, just say that you don't know, 
+                don't try to make up an answer.
+                Results must contain a link for each line of the result in a table,
+                display the results in a tablular format
                 {context}
                 Question: {question}
             """
         PROMPT = PromptTemplate(template=prompt_template, input_variables=["context","question"])
+        # The chain_type_kwargs are passed to the chain_type when it is created.
         self.chain_type_kwargs = {"prompt": PROMPT}
-
-        self.llm = OpenAI(temperature=0.1, openai_api_key=self.openai_api_key)
+        # Create the GenAI project 
+        self.llm = OpenAI(temperature=1.0, openai_api_key=self.openai_api_key)
+    # Get response for query
+    # The response is returned as a string.   
        
     def get_response_for(self, query: str):
         qa = RetrievalQA.from_chain_type(
@@ -110,6 +128,7 @@ class GenAILearningPathIndex:
 def get_formatted_time(current_time = time.time()):
     return datetime.utcfromtimestamp(current_time).strftime('%Y-%m-%d %H:%M:%S')
 
+#   Load the model
 @st.cache_data
 def load_model():
     start_time = time.time()
@@ -121,7 +140,7 @@ def load_model():
     print(f"Custom embeddings (created from .csv file) took about {end_time - start_time} seconds to load.")
     return faiss_vectorstore
 
-
+#  Query the model
 def query_gpt_model(query: str):
     start_time = time.time()
     print(f"\nQuery processing start time: {get_formatted_time(start_time)}")
