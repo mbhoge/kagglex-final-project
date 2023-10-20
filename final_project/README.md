@@ -14,6 +14,9 @@ The end-to-end process can be learnt by going through the code base as well as b
 
 ## Install and run
 
+Copy the `.env_template` to `.env` in the current folder and then add your OpenAI API Key to it.
+
+
 ```bash
 pip install -r requirements.txt
 ```
