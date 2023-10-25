@@ -101,11 +101,15 @@ class GenAILearningPathIndex:
         prompt_template = \
             """
                 Use the following template to answer the question at the end, 
-                from the Learning Path Index csv file.
-                If you don't know the answer, just say that you don't know, 
-                don't try to make up an answer.
-                Results must contain a link for each line of the result in a table,
-                display the results in a tablular format
+                from the Learning Path Index csv file,
+                display top 4 results in a tablular format and it 
+                should look like this:
+                | Learning Pathway | duration  | link | Module
+                | --- | --- | --- | --- |
+                | ... | ... | ... | ... |
+                it must contain a link for each line of the result in a table,
+                consider the duration and Module information mentioned in the question,
+                If you don't know the answer, don't make an entry in the table,
                 {context}
                 Question: {question}
             """
