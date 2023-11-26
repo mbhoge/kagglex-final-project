@@ -11,6 +11,7 @@ from langchain.prompts import PromptTemplate
 from langchain.llms import OpenAI
 from langchain.vectorstores import FAISS
 from langchain.prompts import PromptTemplate
+import openai
 
 from interface import app
 import streamlit as st
@@ -155,7 +156,6 @@ def query_gpt_model(query: str):
     print(f"\nAnswer (took about {end_time - start_time} seconds)")
     return answer
 
-
 if __name__=='__main__':
     faiss_vectorstore = load_model()
 
@@ -165,6 +165,30 @@ if __name__=='__main__':
         if query_from_stream_list:
             answer = query_gpt_model(query_from_stream_list)
             st.write(answer)
+            # create the prompt for OpenAI LLM
+            prompt_template = \
+            """
+                select the courses from udemy.com and cousera.com with similar content,
+                and those are highest rated and have the most number of students enrolled,
+                Question: Refer the module data given in the {answer} and provide the details, 
+                of the courses from udemy.com and cousera.com,
+                display top 4 results in a tablular format and it,
+                should look like this:
+                | Course Name | Duration | link | Rated
+                | --- | --- | --- | --- |
+                | ... | ... | ... | ... |
+                it must contain a link for each line of the result in a table,
+            """.format(answer=answer)
+            # submit the answer to OpenAI LLM
+            # Use the function
+            response = openai.Completion.create(
+                        engine="text-davinci-003",
+                        prompt=prompt_template,
+                        max_tokens=200
+                        )
+            generated_text = response['choices'][0]['text']
+            st.write(generated_text)
+
     else:
         print("\nCommand-line interactive environment detected.\n")
         while True:
