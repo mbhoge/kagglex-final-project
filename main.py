@@ -181,11 +181,12 @@ if __name__=='__main__':
             """.format(answer=answer)
             # submit the answer to OpenAI LLM
             # Use the function
+            openai.api_key = os.getenv("OPENAI_API_KEY")
             response = openai.Completion.create(
-                        engine="text-davinci-003",
-                        prompt=prompt_template,
-                        max_tokens=200
-                        )
+                       engine="text-davinci-003",
+                       prompt=prompt_template,
+                       max_tokens=200
+                       )
             generated_text = response['choices'][0]['text']
             st.write(generated_text)
 
