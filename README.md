@@ -3,8 +3,7 @@
 A prototype written in Python to illustrate/demonstrate querying the Learning Path Index Dataset (see [Kaggle Dataset](https://www.kaggle.com/datasets/neomatrix369/learning-path-index-dataset) and [GitHub repo](https://github.com/neomatrix369/learning-path-index)), with the help of the OpenAI GPT technology (InstructHPT model and embeddings model), [Langchain](https://python.langchain.com/) and using [Facebook's FAISS library](https://faiss.ai/).
 
 
-![image](https://github.com/mbhoge/kagglex-final-project/assets/988040/5396aee3-cf0f-43b6-9b44-aaf779ed803a)
-
+![Alt Text](https://github.com/mbhoge/kagglex-final-project/blob/main/Capture.JPG)
 
 The end-to-end process can be learnt by going through the code base as well as by observing the console logs when using both the Streamlit and the CLI versions.
 
